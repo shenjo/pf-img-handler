@@ -1,5 +1,5 @@
 import data from '../../data.json'
-import {Modal, Image, Button, Space} from "antd";
+import {Modal, Image, Button, Space, Input, InputNumber} from "antd";
 import {useEffect, useState} from "react";
 
 interface IImgItem {
@@ -35,6 +35,8 @@ export default function Home() {
   const [arr] = useState<IDirItem[]>(JSON.parse(localStorage.getItem('HANDLED') || JSON.stringify(data)));
   const [ready, setReady] = useState(false);
   
+  const [taskCount, setTaskCount] = useState<number>(3)
+  
   useEffect(() => {
     if (ready && !open) {
       localStorage.setItem("HANDLED", JSON.stringify(arr))
@@ -68,7 +70,7 @@ export default function Home() {
   
   function RenderArr(data: IDirItem[]) {
     return (
-      <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap',marginBottom:'20px'}}>
+      <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '20px'}}>
         {data.map(item => {
           const fullHandled = item.images.every((item: any) => !!item.status);
           const partialHandled = item.images.some((item: any) => !!item.status);
@@ -85,12 +87,14 @@ export default function Home() {
   }
   
   const total = arr.length;
-  const each = Math.floor((total/3));
+  const each = Math.floor((total / (taskCount > 0 ? taskCount : 1)));
   
   
   return (
     <>
       <Space>
+        <InputNumber defaultValue={taskCount}
+                     onBlur={(e)=> setTaskCount(+e.target.value)}/>
         <Button onClick={async () => {
           await openConfirmBox('一般重新处理的时候才需要清除缓存')
           localStorage.setItem("HANDLED", '')
@@ -100,9 +104,7 @@ export default function Home() {
         <Button onClick={redo}>美工重做的图片数据</Button>
         <span>所有文件夹数：{arr.length}</span>
       </Space>
-      {RenderArr(arr.slice(0,each))}
-      {RenderArr(arr.slice(each,each*2))}
-      {RenderArr(arr.slice(each*2))}
+      {new Array(taskCount).fill({}).map((item: any, index) => RenderArr(arr.slice(index * each, (index + 1) * each)))}
       {open && <PreviewModal open={open} setOpen={setOpen} info={info}/>}
     </>
   
