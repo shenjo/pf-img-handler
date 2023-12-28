@@ -15,17 +15,34 @@ interface IDirItem {
 }
 
 const STATUSMap = {
-  rerun: 'rerun',
   imgOk: 'ok',
-  maskNOk: 'maskNotOk',
-  fail: 'totalFail'
-  
+  edgeFix: 'fixEdge',
+  areaFix: 'fixArea',
+  rerun: 'rerun',
+  fail: 'totalFail',
+  back: "backImg"
 }
+
+/**
+ * 标记状态
+ * 1. 【通过】，比较完美
+ * 2. 【边缘简修】，整体比较完美，边缘有点毛刺，一般只要抹掉毛刺就好
+ * 3. 【局部修复】 蒙版多包含了一部分，需要局部修复一下
+ * 4. 【美工重做】 1. ai画图跟原图的变化不大 2. 画的完全不对
+ * 5. 【ai重画】 蒙版还可以，但是图的姿势怪异、整体不协调
+ * 6. 【背面图】 背面图统一要重做
+ *
+ *
+ */
+
+
 const STATUS = [
-  {name: 'AI重跑', status: STATUSMap.rerun},
-  {name: '满足要求', status: STATUSMap.imgOk},
-  {name: '蒙版差', status: STATUSMap.maskNOk},
-  {name: '完全不行', status: STATUSMap.fail},
+  {name: '通过', status: STATUSMap.imgOk},
+  {name: '边缘简修', status: STATUSMap.edgeFix},
+  {name: '局部修复', status: STATUSMap.areaFix},
+  {name: '美工重做', status: STATUSMap.fail},
+  {name: 'ai重画', status: STATUSMap.rerun},
+  {name: '背面图', status: STATUSMap.back},
 ]
 export default function Home() {
   const [open, setOpen] = useState<boolean>(false)
@@ -44,28 +61,20 @@ export default function Home() {
     setReady(true);
   }, [arr, open]);
   
-  const rerun = () => {
+  const download = () => {
     // arr.find(item=>)
-    const result: string[] = [];
+    const result: Record<string, string[]> = {};
     arr.forEach(dir => {
       dir.images.forEach(imgItem => {
-        if (imgItem.status === STATUSMap.rerun) {
-          result.push(imgItem.srcImg)
+        const label = STATUS.find(item => item.status === imgItem.status)
+        if (label && label.status !== STATUSMap.imgOk) {
+          result[label.name] ||= [];
+          result[label.name].push(imgItem.srcImg)
         }
+        
       })
     })
-    saveToJson(result, 'rerun.json')
-  }
-  const redo = () => {
-    const result: string[] = [];
-    arr.forEach(dir => {
-      dir.images.forEach(imgItem => {
-        if (imgItem.status === STATUSMap.maskNOk || imgItem.status === STATUSMap.fail) {
-          result.push(imgItem.srcImg)
-        }
-      })
-    })
-    saveToJson(result, 'redo.json')
+    saveToJson(result, 'result.json')
   }
   
   function RenderArr(data: IDirItem[]) {
@@ -92,16 +101,15 @@ export default function Home() {
   
   return (
     <>
-      <Space>
+      <Space style={{marginBottom: '24px'}}>
         <InputNumber defaultValue={taskCount}
-                     onBlur={(e)=> setTaskCount(+e.target.value)}/>
+                     onBlur={(e) => setTaskCount(+e.target.value)}/>
         <Button onClick={async () => {
           await openConfirmBox('一般重新处理的时候才需要清除缓存')
           localStorage.setItem("HANDLED", '')
           location.reload();
         }}>清除缓存</Button>
-        <Button onClick={rerun}>获得重跑数据</Button>
-        <Button onClick={redo}>美工重做的图片数据</Button>
+        <Button onClick={download}>下载挑选结果</Button>
         <span>所有文件夹数：{arr.length}</span>
       </Space>
       {new Array(taskCount).fill({}).map((item: any, index) => RenderArr(arr.slice(index * each, (index + 1) * each)))}
