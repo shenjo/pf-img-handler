@@ -1,5 +1,5 @@
 import data from '../../data.json'
-import {Modal, Image, Button, Space, Input, InputNumber} from "antd";
+import {Modal, Image, Button, Space, Input, InputNumber, Tooltip} from "antd";
 import {useEffect, useState} from "react";
 
 interface IImgItem {
@@ -37,12 +37,12 @@ const STATUSMap = {
 
 
 const STATUS = [
-  {name: '通过', status: STATUSMap.imgOk},
-  {name: '边缘简修', status: STATUSMap.edgeFix},
-  {name: '局部修复', status: STATUSMap.areaFix},
-  {name: '美工重做', status: STATUSMap.fail},
-  {name: 'ai重画', status: STATUSMap.rerun},
-  {name: '背面图', status: STATUSMap.back},
+  {name: '通过', status: STATUSMap.imgOk, tips: '比较完美'},
+  {name: '边缘简修', status: STATUSMap.edgeFix, tips: '整体比较完美，边缘有点毛刺，一般只要抹掉毛刺就好'},
+  {name: '局部修复', status: STATUSMap.areaFix, tips: '蒙版多包含了一部分，需要局部修复一下'},
+  {name: '美工重做', status: STATUSMap.fail, tips: '1. ai画图跟原图的变化不大 2. 画的完全不对'},
+  {name: 'ai重画', status: STATUSMap.rerun, tips: '蒙版还可以，但是图的姿势怪异、整体不协调'},
+  {name: '背面图', status: STATUSMap.back, tips: '背面图统一要重做'},
 ]
 export default function Home() {
   const [open, setOpen] = useState<boolean>(false)
@@ -134,10 +134,12 @@ function PreviewModal(props: any) {
               <Image width={350} src={item.maskImg}/>
               <Space>
                 {STATUS.map(statusItem => (
-                  <Button type={statusItem.status === item.status ? 'primary' : undefined} onClick={() => {
-                    item.status = statusItem.status
-                    setCount(prevState => prevState + 1)
-                  }} key={statusItem.status}>{statusItem.name}</Button>
+                  <Tooltip title={statusItem.tips} key={statusItem.status}>
+                    <Button type={statusItem.status === item.status ? 'primary' : undefined} onClick={() => {
+                      item.status = statusItem.status
+                      setCount(prevState => prevState + 1)
+                    }} key={statusItem.status}>{statusItem.name}</Button>
+                  </Tooltip>
                 ))}
               </Space>
             </div>
