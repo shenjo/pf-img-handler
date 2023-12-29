@@ -54,6 +54,8 @@ export default function Home() {
   
   const [taskCount, setTaskCount] = useState<number>(3)
   
+  const [filterDirName, setFilterDirName] = useState<string>('')
+  
   useEffect(() => {
     if (ready && !open) {
       localStorage.setItem("HANDLED", JSON.stringify(arr))
@@ -95,9 +97,10 @@ export default function Home() {
     )
   }
   
-  const total = arr.length;
-  const each = Math.floor((total / (taskCount > 0 ? taskCount : 1)));
+  const displayArr = arr.filter(item => filterDirName ? item.dirName.includes(filterDirName + '') : true)
   
+  const total = displayArr.length;
+  const each = Math.max(3, Math.floor((total / (taskCount > 0 ? taskCount : 1))));
   
   return (
     <>
@@ -110,9 +113,13 @@ export default function Home() {
           location.reload();
         }}>清除缓存</Button>
         <Button onClick={download}>下载挑选结果</Button>
-        <span>所有文件夹数：{arr.length}</span>
+        <Input.Search onSearch={(value) => {
+          //
+          setFilterDirName(value)
+        }}/>
+        <span>所有文件夹数：{displayArr.length}</span>
       </Space>
-      {new Array(taskCount).fill({}).map((item: any, index) => RenderArr(arr.slice(index * each, (index + 1) * each)))}
+      {new Array(taskCount).fill({}).map((item: any, index) => RenderArr(displayArr.slice(index * each, (index + 1) * each)))}
       {open && <PreviewModal open={open} setOpen={setOpen} info={info}/>}
     </>
   
